@@ -1,20 +1,20 @@
 import CredentialsProvider from "next-auth/providers/credentials";
-import { type NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth"
+import { PrismaAdapter } from "@auth/prisma-adapter"
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-export const authOptions = {
+export const { handlers, auth, signIn, signOut} = NextAuth({
+  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
-      name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        name: { label: "Name", type: "name" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials");
+        if (typeof credentials?.email !== "string" || typeof credentials?.password !== "string") {
+          throw new Error("Email and password are required");
         }
 
         const user = await prisma.user.findUnique({
@@ -22,13 +22,7 @@ export const authOptions = {
         });
 
         if (!user) {
-          return await prisma.user.create({
-            data: {
-              name: credentials.name ?? credentials.email,
-              email: credentials.email,
-              password: await bcrypt.hash(credentials.password, 10),
-            },
-          });
+          throw new Error("User not found");
         }
 
         const isCorrectPassword = await bcrypt.compare(
@@ -44,6 +38,9 @@ export const authOptions = {
       },
     }),
   ],
+  session: {
+    strategy: "jwt",
+  },
   pages: {
     signIn: "/login",
   },
@@ -52,7 +49,7 @@ export const authOptions = {
       return { ...token, id: token.id ?? user?.id };
     },
     async session({ session, token }) {
-      return { ...session, user: { ...session.user, id: token.id } };
+      return { ...session, user: { ...session.user, id: token.id as string } };
     },
   },
-} satisfies NextAuthOptions;
+});

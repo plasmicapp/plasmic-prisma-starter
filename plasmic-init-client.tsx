@@ -1,0 +1,140 @@
+"use client";
+
+import { PLASMIC } from "@/plasmic-init";
+import { Prisma } from '@prisma/client';
+import { PlasmicRootProvider } from "@plasmicapp/loader-nextjs";
+import { PrismaQuery, PrismaQueryOperationType } from '@/components/PrismaQuery';
+import { UserSession } from "@/components/UserSessionContext";
+import React from "react";
+
+export function PlasmicClientRootProvider(
+    props: Omit<React.ComponentProps<typeof PlasmicRootProvider>, "loader">,
+) {
+    return (
+        <PlasmicRootProvider loader={PLASMIC} {...props}></PlasmicRootProvider>
+    );
+}
+
+PLASMIC.registerGlobalContext(UserSession, {
+    name: "UserSession",
+    providesData: true,
+    props: {},
+    globalActions: {
+        login: {
+            parameters: [
+                {
+                    name: "provider",
+                    type: {
+                        type: "choice",
+                        options: ["google"],
+                    },
+                },
+                {
+                    name: "redirectTo",
+                    type: "string",
+                },
+            ],
+        },
+        logout: {
+            parameters: [
+                {
+                    name: "redirectTo",
+                    type: "string",
+                },
+            ],
+        },
+    },
+});
+
+PLASMIC.registerComponent(PrismaQuery, {
+    name: 'PrismaQuery',
+    providesData: true,
+    props: {
+        children: 'slot',
+        table: {
+            type: 'choice',
+            options: Object.keys(Prisma.ModelName).map((name) => ({
+                value: name,
+                label: name,
+            })),
+            description: 'Select the Prisma model to query',
+        },
+        operation: {
+            type: 'choice',
+            options: Object.keys(PrismaQueryOperationType).map((op) => ({
+                value: op,
+                label: op,
+            })),
+            description: 'Select the Prisma operation to perform',
+        },
+        args: {
+            type: 'object',
+            description: 'The Prisma query arguments',
+            defaultValue: {},
+            // This is a placeholder; you can define the structure of the query object as needed
+        },
+    }
+})
+
+// You can register any code components that you want to use here; see
+// https://docs.plasmic.app/learn/code-components-ref/
+// And configure your Plasmic project to use the host url pointing at
+// the /plasmic-host page of your nextjs app (for example,
+// http://localhost:3000/plasmic-host).  See
+// https://docs.plasmic.app/learn/app-hosting/#set-a-plasmic-project-to-use-your-app-host
+
+// PLASMIC.registerComponent(CodeComponent, {
+//   name: "My Code Component",
+//   props: {
+//     children: "slot",
+//   },
+//   section: "Example components",
+//   thumbnailUrl:
+//     "https://site-assets.plasmic.app/744209a6041e927f550afff230a012f5.svg",
+// });
+
+
+/**
+ * PlasmicClientRootProvider is a Client Component that passes in the loader for you.
+ *
+ * Why? Props passed from Server to Client Components must be serializable.
+ * https://beta.nextjs.org/docs/rendering/server-and-client-components#passing-props-from-server-to-client-components-serialization
+ * However, PlasmicRootProvider requires a loader, but the loader is NOT serializable.
+ *
+ * In a Server Component like app/<your-path>/path.tsx, rendering the following would not work:
+ *
+ * ```tsx
+ * import { PLASMIC } from "@/plasmic-init";
+ * import { PlasmicRootProvider } from "plasmicapp/loader-nextjs";
+ * export default function MyPage() {
+ *   const prefetchedData = await PLASMIC.fetchComponentData("YourPage");
+ *   return (
+ *     <PlasmicRootProvider
+ *       loader={PLASMIC} // ERROR: loader is not serializable
+ *       prefetchedData={prefetchedData}
+ *     >
+ *       {yourContent()}
+ *     </PlasmicRootProvider>;
+ *   );
+ * }
+ * ```
+ *
+ * Therefore, we define PlasmicClientRootProvider as a Client Component (this file is marked "use client").
+ * PlasmicClientRootProvider wraps the PlasmicRootProvider and passes in the loader for you,
+ * while allowing your Server Component to pass in prefetched data and other serializable props:
+ *
+ * ```tsx
+ * import { PLASMIC } from "@/plasmic-init";
+ * import { PlasmicClientRootProvider } from "@/plasmic-init-client"; // changed
+ * export default function MyPage() {
+ *   const prefetchedData = await PLASMIC.fetchComponentData("YourPage");
+ *   return (
+ *     <PlasmicClientRootProvider // don't pass in loader
+ *       prefetchedData={prefetchedData}
+ *     >
+ *       {yourContent()}
+ *     </PlasmicClientRootProvider>;
+ *   );
+ * }
+ * ```
+ */

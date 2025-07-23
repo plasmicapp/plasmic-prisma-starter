@@ -13,16 +13,16 @@ export default function Header() {
           Superblog
         </Link>
         <div className="flex items-center space-x-4">
-          <Link 
-            href="/posts" 
+          <Link
+            href="/posts"
             className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
           >
             Posts
           </Link>
           {session ? (
             <>
-              <Link 
-                href="/posts/new" 
+              <Link
+                href="/posts/new"
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
               >
                 New Post

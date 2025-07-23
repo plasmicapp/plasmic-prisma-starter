@@ -4,8 +4,8 @@ import Header from "./Header";
 import Providers from "./providers";
 
 export const metadata = {
-  title: "Superblog",
-  description: "A blog app using Next.js and Prisma",
+  title: "Plasmic + Prisma Blog",
+  description: "A blog app using Next.js, Plasmic and Prisma",
 };
 
 export default function RootLayout({
