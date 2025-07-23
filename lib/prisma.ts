@@ -3,7 +3,7 @@ import { withAccelerate } from '@prisma/extension-accelerate'
 
 const prismaClientSingleton = () => {
   return new PrismaClient().$extends(withAccelerate());
-};
+}
 
 declare const globalThis: {
   prismaGlobal: ReturnType<typeof prismaClientSingleton>;
@@ -14,3 +14,11 @@ const prisma = globalThis.prismaGlobal ?? prismaClientSingleton();
 export default prisma;
 
 if (process.env.NODE_ENV !== "production") globalThis.prismaGlobal = prisma;
+
+export const PrismaQueryOperationType = [
+    'findUnique',
+    'findMany',
+    'findFirst',
+    'aggregate',
+    'count'
+] as const;

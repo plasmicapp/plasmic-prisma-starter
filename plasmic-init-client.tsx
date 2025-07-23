@@ -1,9 +1,7 @@
 "use client";
 
 import { PLASMIC } from "@/plasmic-init";
-import { Prisma } from '@prisma/client';
 import { PlasmicRootProvider } from "@plasmicapp/loader-nextjs";
-import { PrismaQuery, PrismaQueryOperationType } from '@/components/PrismaQuery';
 import { UserSession } from "@/components/UserSessionContext";
 import React from "react";
 
@@ -45,36 +43,6 @@ PLASMIC.registerGlobalContext(UserSession, {
         },
     },
 });
-
-PLASMIC.registerComponent(PrismaQuery, {
-    name: 'PrismaQuery',
-    providesData: true,
-    props: {
-        children: 'slot',
-        table: {
-            type: 'choice',
-            options: Object.keys(Prisma.ModelName).map((name) => ({
-                value: name,
-                label: name,
-            })),
-            description: 'Select the Prisma model to query',
-        },
-        operation: {
-            type: 'choice',
-            options: Object.keys(PrismaQueryOperationType).map((op) => ({
-                value: op,
-                label: op,
-            })),
-            description: 'Select the Prisma operation to perform',
-        },
-        args: {
-            type: 'object',
-            description: 'The Prisma query arguments',
-            defaultValue: {},
-            // This is a placeholder; you can define the structure of the query object as needed
-        },
-    }
-})
 
 // You can register any code components that you want to use here; see
 // https://docs.plasmic.app/learn/code-components-ref/

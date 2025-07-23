@@ -1,3 +1,5 @@
+'use client';
+
 import { DataProvider, GlobalActionsProvider } from "@plasmicapp/loader-nextjs";
 import { signIn, signOut, useSession } from "next-auth/react";
 
