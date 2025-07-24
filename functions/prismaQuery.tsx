@@ -1,27 +1,27 @@
 'use server';
 
-import prisma, { PrismaQueryOperationType }from "@/lib/prisma";
+import prisma, { PrismaOperations, tableNameToMethodName } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
-
-export type PrismaQueryOperationType =  typeof PrismaQueryOperationType[number];
 
 export const prismaQuery = async <
     TModel extends Prisma.ModelName,
-    TOp extends PrismaQueryOperationType
+    TOp extends typeof PrismaOperations[number]
 >(
     table: TModel,
     operation: TOp,
     args?: Prisma.TypeMap["model"][TModel]["operations"][TOp]["args"],
 ) => {
+    const methodName = tableNameToMethodName(table);
     // check if method exists
-    if (!(operation in prisma[table as Prisma.TypeMap["meta"]["modelProps"]])) {
+    if (!(operation in prisma[methodName])) {
         return 'Please select a table and an operation to execute.';
     }
 
     let result;
     try {
         // This cast is safe because we've verified the operation exists
-        result = await prisma[table as Prisma.TypeMap["meta"]["modelProps"]][operation](args);
+        // @ts-expect-error - The union is too hard for TS to type check
+        result = await prisma[methodName][operation](args);
     } catch (error: unknown) {
         console.error("Error executing Prisma query:", error);
         return `Error executing query ${error}`;

@@ -1,7 +1,7 @@
 import { initPlasmicLoader } from "@plasmicapp/loader-nextjs/react-server-conditional";
 import * as NextNavigation from "next/navigation";
 import { Prisma } from '@prisma/client';
-import { PrismaQueryOperationType } from "@/lib/prisma";
+import { PrismaOperations } from "@/lib/prisma";
 import { prismaQuery } from '@/functions/prismaQuery';
 
 export const PLASMIC = initPlasmicLoader({
@@ -17,33 +17,38 @@ export const PLASMIC = initPlasmicLoader({
   preview: true,
 })
 
+const prismaTableParam = {
+    name: 'table',
+    type: 'choice' as const,
+    options: Object.values(Prisma.ModelName).map((name) => ({
+        value: name,
+        label: name,
+    })),
+    description: 'Select the Prisma model to query',
+};
+
+const getPrismaOperationParam = <T extends readonly string[]>(operations: T) => ({
+    name: 'operation',
+    type: 'choice' as const,
+    options: [...operations].map((op) => ({
+        value: op,
+        label: op,
+    })),
+    description: 'Select the Prisma operation to perform',
+    multiSelect: false as const,
+});
+
 
 PLASMIC.registerFunction(prismaQuery, {
     name: 'prismaQuery',
+    isQuery: true,
     params: [
-        {
-            name: 'table',
-            type: 'choice',
-            options: Object.values(Prisma.ModelName).map((name) => ({
-                value: name,
-                label: name,
-            })),
-            description: 'Select the Prisma model to query',
-        },
-        {
-            name: 'operation',
-            type: 'choice',
-            options: Object.values(PrismaQueryOperationType).map((op) => ({
-                value: op,
-                label: op,
-            })),
-            description: 'Select the Prisma operation to perform',
-        },
+        prismaTableParam,
+        getPrismaOperationParam(PrismaOperations),
         {
             name: 'args',
-            type: 'code',
+            type: 'object',
             description: 'The Prisma query arguments',
-            // This is a placeholder; you can define the structure of the query object as needed
-        }, 
+        }
     ],
-})
+});

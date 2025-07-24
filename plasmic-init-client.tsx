@@ -24,12 +24,16 @@ PLASMIC.registerGlobalContext(UserSession, {
                     name: "provider",
                     type: {
                         type: "choice",
-                        options: ["google"],
+                        options: ["credentials"],
                     },
                 },
                 {
                     name: "redirectTo",
                     type: "string",
+                },
+                {
+                    name: "payload",
+                    type: "exprEditor",
                 },
             ],
         },
