@@ -4,6 +4,10 @@ import { PLASMIC } from "@/plasmic-init";
 import { PlasmicRootProvider } from "@plasmicapp/loader-nextjs";
 import { UserSession } from "@/components/UserSessionContext";
 import React from "react";
+import { Prisma } from '@prisma/client';
+import { PrismaOperations } from "@/lib/prisma";
+import { prismaQuery } from '@/functions/prismaQuery';
+
 
 export function PlasmicClientRootProvider(
     props: Omit<React.ComponentProps<typeof PlasmicRootProvider>, "loader">,
@@ -12,6 +16,41 @@ export function PlasmicClientRootProvider(
         <PlasmicRootProvider loader={PLASMIC} {...props}></PlasmicRootProvider>
     );
 }
+
+const prismaTableParam = {
+    name: 'table',
+    type: 'choice' as const,
+    options: Object.values(Prisma.ModelName).map((name) => ({
+        value: name,
+        label: name,
+    })),
+    description: 'Select the Prisma model to query',
+};
+
+const getPrismaOperationParam = <T extends readonly string[]>(operations: T) => ({
+    name: 'operation',
+    type: 'choice' as const,
+    options: [...operations].map((op) => ({
+        value: op,
+        label: op,
+    })),
+    description: 'Select the Prisma operation to perform',
+    multiSelect: false as const,
+});
+
+PLASMIC.registerFunction(prismaQuery, {
+    name: 'prismaQuery',
+    isQuery: true,
+    params: [
+        prismaTableParam,
+        getPrismaOperationParam(PrismaOperations),
+        {
+            name: 'args',
+            type: 'object',
+            description: 'The Prisma query arguments',
+        }
+    ],
+});
 
 PLASMIC.registerGlobalContext(UserSession, {
     name: "UserSession",
