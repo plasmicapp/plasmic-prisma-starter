@@ -4,12 +4,52 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
+  const roles = await Promise.all([
+    prisma.role.create({
+      data: { 
+        name: 'writer',
+        permissions: {
+          create: true,
+          read: true,
+          update: true,
+          delete: true,
+        }
+      },
+    }),
+    prisma.role.create({ 
+      data: { 
+        name: 'reader',
+        permissions: {
+          create: false,
+          read: true,
+          update: false,
+          delete: false,
+        }
+      }
+    }),
+    prisma.role.create({ 
+      data: { 
+        name: 'guest',
+        permissions: {
+          create: false,
+          read: true,
+          update: false,
+          delete: false,
+        }
+      }
+    })
+  ]);
+
+  const writerId = roles[0].id;
+  const readerId = roles[1].id;
+
   // Create 5 users with hashed passwords
   const users = await Promise.all([
     prisma.user.create({
       data: {
         email: 'alice@example.com',
         name: 'Alice',
+        roleId: readerId,
         password: await bcrypt.hash('password123', 10),
       },
     }),
@@ -17,6 +57,7 @@ async function main() {
       data: {
         email: 'bob@example.com',
         name: 'Bob',
+        roleId: writerId,
         password: await bcrypt.hash('password123', 10),
       },
     }),
@@ -24,6 +65,7 @@ async function main() {
       data: {
         email: 'charlie@example.com',
         name: 'Charlie',
+        roleId: readerId,
         password: await bcrypt.hash('password123', 10),
       },
     }),
@@ -31,6 +73,7 @@ async function main() {
       data: {
         email: 'diana@example.com',
         name: 'Diana',
+        roleId: writerId,
         password: await bcrypt.hash('password123', 10),
       },
     }),
@@ -38,6 +81,7 @@ async function main() {
       data: {
         email: 'edward@example.com',
         name: 'Edward',
+        roleId: readerId,
         password: await bcrypt.hash('password123', 10),
       },
     }),

@@ -5,7 +5,7 @@ import { PlasmicRootProvider } from "@plasmicapp/loader-nextjs";
 import { UserSession } from "@/components/UserSessionContext";
 import React from "react";
 import { Prisma } from '@prisma/client';
-import { PrismaOperations } from "@/lib/prisma";
+import { PrismaOperations } from "@/lib/types";
 import { prismaQuery } from '@/functions/prismaQuery';
 
 

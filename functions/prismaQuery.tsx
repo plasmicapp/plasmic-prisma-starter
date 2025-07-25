@@ -1,7 +1,10 @@
 'use server';
 
-import prisma, { PrismaOperations, tableNameToMethodName } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { checkPermissions } from "@/lib/checkPermissions";
+import { PrismaOperations } from "@/lib/types";
+import { tableNameToMethodName } from "@/lib/db-helpers";
 
 export const prismaQuery = async <
     TModel extends Prisma.ModelName,
@@ -11,10 +14,18 @@ export const prismaQuery = async <
     operation: TOp,
     args?: Prisma.TypeMap["model"][TModel]["operations"][TOp]["args"],
 ) => {
-    const methodName = tableNameToMethodName(table);
+    if (!(await checkPermissions(operation))) {
+        return {
+            error: 'You do not have permission to perform this operation.'
+        }
+    }
+    
+    const methodName = tableNameToMethodName(table || '');
     // check if method exists
-    if (!(operation in prisma[methodName])) {
-        return 'Please select a table and an operation to execute.';
+    if (!methodName || !(operation in prisma[methodName])) {
+        return {
+            error: 'Please select a table and an operation to execute.'
+        };
     }
 
     let result;
@@ -24,7 +35,9 @@ export const prismaQuery = async <
         result = await prisma[methodName][operation](args);
     } catch (error: unknown) {
         console.error("Error executing Prisma query:", error);
-        return `Error executing query ${error}`;
+        return {
+            error: `Error executing query ${error}`
+        };
     }
 
     return result;
