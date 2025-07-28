@@ -38,11 +38,6 @@ const getPrismaOperationParam = <T extends readonly string[]>(operations: T) => 
     description: 'Select the Prisma operation to perform',
     multiSelect: false as const,
 });
-const prismaArgsParam = {
-    name: 'args',
-    type: 'object' as const,
-    description: 'The Prisma query arguments',
-}
 
 PLASMIC.registerFunction(prismaQuery, {
     name: 'prismaQuery',
@@ -50,7 +45,11 @@ PLASMIC.registerFunction(prismaQuery, {
     params: [
         prismaTableParam,
         getPrismaOperationParam(PrismaOperations),
-        prismaArgsParam
+        {
+            name: 'args',
+            type: 'object',
+            description: 'The Prisma query arguments',
+        }
     ],
 });
 
@@ -111,7 +110,10 @@ PLASMIC.registerComponent(PrismaDataFetcher, {
     props: {
         table: prismaTableParam,
         operation: getPrismaOperationParam(PrismaReadOperations),
-        args: prismaArgsParam,
+        args: {
+            type: 'exprEditor',
+            description: 'The Prisma query arguments',
+        },
         children: 'slot',
     },
     providesData: true,
