@@ -6,6 +6,7 @@ import { UserSession } from "@/components/UserSessionContext";
 import React from "react";
 import { Prisma } from '@prisma/client';
 import { PrismaOperations } from "@/lib/types";
+import { PrismaDataFetcher } from "@/components/PrismaDataFetcher";
 import { prismaQuery } from '@/functions/prismaQuery';
 
 
@@ -27,28 +28,30 @@ const prismaTableParam = {
     description: 'Select the Prisma model to query',
 };
 
-const getPrismaOperationParam = <T extends readonly string[]>(operations: T) => ({
+const prismaOperationParam = {
     name: 'operation',
     type: 'choice' as const,
-    options: [...operations].map((op) => ({
+    options: [...PrismaOperations].map((op) => ({
         value: op,
         label: op,
     })),
     description: 'Select the Prisma operation to perform',
     multiSelect: false as const,
-});
+};
+
+const prismaArgsParam = {
+    name: 'args',
+    type: 'object' as const,
+    description: 'The Prisma query arguments',
+}
 
 PLASMIC.registerFunction(prismaQuery, {
     name: 'prismaQuery',
     isQuery: true,
     params: [
         prismaTableParam,
-        getPrismaOperationParam(PrismaOperations),
-        {
-            name: 'args',
-            type: 'object',
-            description: 'The Prisma query arguments',
-        }
+        prismaOperationParam,
+        prismaArgsParam
     ],
 });
 
@@ -104,6 +107,16 @@ PLASMIC.registerGlobalContext(UserSession, {
 //     "https://site-assets.plasmic.app/744209a6041e927f550afff230a012f5.svg",
 // });
 
+PLASMIC.registerComponent(PrismaDataFetcher, {
+    name: "PrismaDataFetcher",
+    props: {
+        table: prismaTableParam,
+        operation: prismaOperationParam,
+        args: prismaArgsParam,
+        children: 'slot',
+    },
+    providesData: true,
+});
 
 /**
  * PlasmicClientRootProvider is a Client Component that passes in the loader for you.
