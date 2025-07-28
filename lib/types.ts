@@ -1,10 +1,8 @@
 
 export const PrismaOperations = [
     'findUnique',
-    'findUniqueOrThrow',
     'findMany',
     'findFirst',
-    'findFirstOrThrow',
     'create',
     'createMany',
     'createManyAndReturn',
@@ -14,6 +12,15 @@ export const PrismaOperations = [
     'upsert',
     'delete',
     'deleteMany',
+    'aggregate',
+    'count',
+    'groupBy',
+] as const;
+
+export const PrismaReadOperations = [
+    'findUnique',
+    'findMany',
+    'findFirst',
     'aggregate',
     'count',
     'groupBy',

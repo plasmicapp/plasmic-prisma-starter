@@ -5,7 +5,7 @@ import { PlasmicRootProvider } from "@plasmicapp/loader-nextjs";
 import { UserSession } from "@/components/UserSessionContext";
 import React from "react";
 import { Prisma } from '@prisma/client';
-import { PrismaOperations } from "@/lib/types";
+import { PrismaOperations, PrismaReadOperations } from "@/lib/types";
 import { PrismaDataFetcher } from "@/components/PrismaDataFetcher";
 import { prismaQuery } from '@/functions/prismaQuery';
 
@@ -28,17 +28,16 @@ const prismaTableParam = {
     description: 'Select the Prisma model to query',
 };
 
-const prismaOperationParam = {
+const getPrismaOperationParam = <T extends readonly string[]>(operations: T) => ({
     name: 'operation',
     type: 'choice' as const,
-    options: [...PrismaOperations].map((op) => ({
+    options: [...operations].map((op) => ({
         value: op,
         label: op,
     })),
     description: 'Select the Prisma operation to perform',
     multiSelect: false as const,
-};
-
+});
 const prismaArgsParam = {
     name: 'args',
     type: 'object' as const,
@@ -50,7 +49,7 @@ PLASMIC.registerFunction(prismaQuery, {
     isQuery: true,
     params: [
         prismaTableParam,
-        prismaOperationParam,
+        getPrismaOperationParam(PrismaOperations),
         prismaArgsParam
     ],
 });
@@ -111,7 +110,7 @@ PLASMIC.registerComponent(PrismaDataFetcher, {
     name: "PrismaDataFetcher",
     props: {
         table: prismaTableParam,
-        operation: prismaOperationParam,
+        operation: getPrismaOperationParam(PrismaReadOperations),
         args: prismaArgsParam,
         children: 'slot',
     },
