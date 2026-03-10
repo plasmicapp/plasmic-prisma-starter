@@ -19,7 +19,7 @@ export const prismaQuery = async <
             error: 'You do not have permission to perform this operation.'
         }
     }
-    
+
     const methodName = tableNameToMethodName(table || '');
     // check if method exists
     if (!methodName || !(operation in prisma[methodName])) {
