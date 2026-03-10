@@ -1,8 +1,4 @@
-import CredentialsProvider from "next-auth/providers/credentials";
-import { NextAuthConfig } from "next-auth"
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import prisma from "@/lib/prisma";
-import bcrypt from "bcryptjs";
+import type { NextAuthConfig } from "next-auth";
 
 /*
  * In order to log in through your browser and expose the logged in state
@@ -34,45 +30,11 @@ const devCookiesConfig: NextAuthConfig["cookies"] = {
   },
 };
 
+// Edge-safe config: no Prisma, no Node.js-only imports.
+// Used by middleware and extended by auth.ts.
 export const nextAuthConfig: NextAuthConfig = {
-  adapter: PrismaAdapter(prisma),
+  providers: [], // populated in auth.ts
   cookies: process.env.NODE_ENV !== "production" ? devCookiesConfig : undefined,
-  providers: [
-    CredentialsProvider({
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        if (typeof credentials?.email !== "string" || typeof credentials?.password !== "string") {
-          throw new Error("Email and password are required");
-        }
-
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-          include: { 
-            role: {
-              select: { name: true }
-            }
-          }
-        });
-        if (!user) {
-          throw new Error("User not found");
-        }
-
-        const isCorrectPassword = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-
-        if (!isCorrectPassword) {
-          throw new Error("Invalid credentials");
-        }
-
-        return user;
-      },
-    }),
-  ],
   session: {
     strategy: "jwt",
   },
@@ -81,17 +43,17 @@ export const nextAuthConfig: NextAuthConfig = {
   },
   callbacks: {
     async jwt({ token, user }) {
-      return { ...token, roleName: token?.roleName || user?.role?.name, id: token.id ?? user?.id };
+      return { ...token, roleName: token?.roleName || (user as { role?: { name?: string } })?.role?.name, id: token.id ?? user?.id };
     },
     async session({ session, token }) {
-      return { 
+      return {
         ...session,
-        user: { 
-            ...session.user, 
-            id: token.id as string, 
-            roleName: token.roleName as string | null 
-        } 
-    };
+        user: {
+          ...session.user,
+          id: token.id as string,
+          roleName: token.roleName as string | null,
+        },
+      };
     },
   },
 };
