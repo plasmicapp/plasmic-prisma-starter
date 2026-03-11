@@ -1,5 +1,8 @@
 import { initPlasmicLoader } from "@plasmicapp/loader-nextjs/react-server-conditional";
 import * as NextNavigation from "next/navigation";
+import { Prisma } from '@prisma/client';
+import { PrismaOperations } from "@/lib/types";
+import { prismaQuery } from '@/functions/prismaQuery';
 
 export const PLASMIC = initPlasmicLoader({
   nextNavigation: NextNavigation,
@@ -13,3 +16,39 @@ export const PLASMIC = initPlasmicLoader({
   // Disable for production to ensure you render only published changes.
   preview: true,
 })
+
+
+export const prismaTableParam = {
+    name: 'table',
+    type: 'choice' as const,
+    options: Object.values(Prisma.ModelName).map((name) => ({
+        value: name,
+        label: name,
+    })),
+    description: 'Select the Prisma model to query',
+};
+
+export const getPrismaOperationParam = <T extends readonly string[]>(operations: T) => ({
+    name: 'operation',
+    type: 'choice' as const,
+    options: [...operations].map((op) => ({
+        value: op,
+        label: op,
+    })),
+    description: 'Select the Prisma operation to perform',
+    multiSelect: false as const,
+});
+
+PLASMIC.registerFunction(prismaQuery, {
+    name: 'prismaQuery',
+    isQuery: true,
+    params: [
+        prismaTableParam,
+        getPrismaOperationParam(PrismaOperations),
+        {
+            name: 'args',
+            type: 'object',
+            description: 'The Prisma query arguments',
+        }
+    ],
+});

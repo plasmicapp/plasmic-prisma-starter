@@ -1,13 +1,11 @@
 "use client";
 
-import { PLASMIC } from "@/plasmic-init";
+import { PLASMIC, prismaTableParam, getPrismaOperationParam } from "@/plasmic-init";
 import { PlasmicRootProvider } from "@plasmicapp/loader-nextjs";
 import { UserSession } from "@/components/UserSessionContext";
 import React from "react";
-import { Prisma } from '@prisma/client';
-import { PrismaOperations, PrismaReadOperations } from "@/lib/types";
+import { PrismaReadOperations } from "@/lib/types";
 import { PrismaDataFetcher } from "@/components/PrismaDataFetcher";
-import { prismaQuery } from '@/functions/prismaQuery';
 
 
 export function PlasmicClientRootProvider(
@@ -17,41 +15,6 @@ export function PlasmicClientRootProvider(
         <PlasmicRootProvider loader={PLASMIC} {...props}></PlasmicRootProvider>
     );
 }
-
-const prismaTableParam = {
-    name: 'table',
-    type: 'choice' as const,
-    options: Object.values(Prisma.ModelName).map((name) => ({
-        value: name,
-        label: name,
-    })),
-    description: 'Select the Prisma model to query',
-};
-
-const getPrismaOperationParam = <T extends readonly string[]>(operations: T) => ({
-    name: 'operation',
-    type: 'choice' as const,
-    options: [...operations].map((op) => ({
-        value: op,
-        label: op,
-    })),
-    description: 'Select the Prisma operation to perform',
-    multiSelect: false as const,
-});
-
-PLASMIC.registerFunction(prismaQuery, {
-    name: 'prismaQuery',
-    isQuery: true,
-    params: [
-        prismaTableParam,
-        getPrismaOperationParam(PrismaOperations),
-        {
-            name: 'args',
-            type: 'object',
-            description: 'The Prisma query arguments',
-        }
-    ],
-});
 
 PLASMIC.registerGlobalContext(UserSession, {
     name: "UserSession",
