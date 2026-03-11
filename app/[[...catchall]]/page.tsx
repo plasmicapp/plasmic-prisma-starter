@@ -1,11 +1,6 @@
 import { PLASMIC } from "@/plasmic-init";
-import { PlasmicClientRootProvider } from "@/plasmic-init-client";
-import {
-  ComponentRenderData,
-  PlasmicComponent,
-} from "@plasmicapp/loader-nextjs";
+import { renderPlasmicPage, resolvePlasmicMetadata } from "@/components/PlasmicPage";
 import { Metadata, ResolvingMetadata } from "next";
-import { notFound } from "next/navigation";
 
 export const revalidate = 60;
 
@@ -38,56 +33,17 @@ export async function generateMetadata(
   { params }: LoaderPageProps,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const { componentData } = await getPageData(params);
-
-  if (!componentData) {
+  const { catchall } = await params;
+  const pagePath = catchall ? `/${catchall.join("/")}` : "/";
+  const metadata = await resolvePlasmicMetadata(pagePath, parent);
+  if (!metadata) {
     return parent as Promise<Metadata>;
   }
-  const pageMeta = componentData.entryCompMetas[0];
-  const metadata = await PLASMIC.unstable__generateMetadata(componentData, {
-    params: pageMeta.params ?? {},
-    query: {},
-  });
-  return { ...(await parent), ...metadata };
+  return metadata;
 }
 
 export default async function PlasmicLoaderPage({ params }: LoaderPageProps) {
-  const { pagePath, componentData } = await getPageData(params);
-
-  if (!componentData) {
-    notFound();
-  }
-  const pageMeta = componentData.entryCompMetas[0];
-  const prefetchedQueryData = await PLASMIC.unstable__getServerQueriesData(
-    componentData,
-    {
-      pagePath,
-      params: pageMeta.params,
-      query: {},
-    }
-  );
-
-  return (
-    <PlasmicClientRootProvider
-      prefetchedData={componentData}
-      prefetchedQueryData={prefetchedQueryData}
-      pageParams={pageMeta.params}
-    >
-      <PlasmicComponent component={pageMeta.displayName} />
-    </PlasmicClientRootProvider>
-  );
-}
-
-async function getPageData(
-  params: Promise<Params>
-): Promise<{ pagePath: string; componentData?: ComponentRenderData }> {
-  const catchall = (await params).catchall;
+  const { catchall } = await params;
   const pagePath = catchall ? `/${catchall.join("/")}` : "/";
-
-  const componentData = await PLASMIC.maybeFetchComponentData(pagePath);
-
-  if (!componentData || componentData.entryCompMetas.length === 0) {
-    return { pagePath };
-  }
-  return { pagePath, componentData };
+  return await renderPlasmicPage(pagePath);
 }
