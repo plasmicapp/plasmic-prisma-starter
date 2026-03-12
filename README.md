@@ -1,6 +1,8 @@
-# Next.js & Prisma Postgres Auth Starter
+# Plamsic & Prisma Starter
 
-This repository provides a boilerplate to quickly set up a Next.js demo application with authentication using [NextAuth.js v4](https://next-auth.js.org/), [Prisma Postgres](https://www.prisma.io/postgres) and [Prisma ORM](https://www.prisma.io/orm), and deploy it to Vercel. It includes an easy setup process and example routes that demonstrate basic CRUD operations against the database.
+This repository provides a boilerplate to quickly set up a Next.js application with authentication using [Auth.js](https://authjs.dev/), [Prisma Postgres](https://www.prisma.io/postgres) and [Prisma ORM](https://www.prisma.io/orm), connect to [Plasmic](https://plasmic.app) and deploy it to Vercel. It includes an easy setup process and example routes that demonstrate basic CRUD operations against the database.
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fplasmicapp%2Fplasmic-prisma-starter&env=AUTH_SECRET,DATABASE_URL&envDefaults=%7B%22AUTH_SECRET%22%3A%22Run%20%5C%22npx%20auth%5C%22.%20Read%20more%3A%20https%3A%2F%2Fcli.authjs.dev%22%2C%22DATABASE_URL%22%3A%22prisma%2Bpostgres%3A%2F%2Faccelerate.prisma-data.net%2F%3Fapi_key%3DYOUR_API_KEY%22%7D&project-name=prisma-plasmic-app&repository-name=prisma-plasmic-app)
 
 ## Features
 
@@ -9,6 +11,7 @@ This repository provides a boilerplate to quickly set up a Next.js demo applicat
 - Log in and sign up authentication flows
 - CRUD operations to create, view and delete blog posts
 - Pagination, filtering & relations queries
+- Visual development with Plasmic
 
 ## Getting started
 
@@ -17,7 +20,7 @@ This repository provides a boilerplate to quickly set up a Next.js demo applicat
 After cloning the repo and navigating into it, install dependencies:
 
 ```
-npm install
+yarn
 ```
 
 ### 1. Create a Prisma Postgres instance
@@ -89,25 +92,6 @@ Run the following commands to set up your database and Prisma schema:
 ```bash
 npx prisma migrate dev --name init
 ```
-
-<!--
-<details>
-
-<summary>Expand for <code>yarn</code>, <code>pnpm</code> or <code>bun</code></summary>
-
-```bash
-# Using yarn
-yarn prisma migrate dev --name init
-
-# Using pnpm
-pnpm prisma migrate dev --name init
-
-# Using bun
-bun prisma migrate dev --name init
-```
-
-</details> -->
-
 ### 4. Seed the database
 
 Add initial data to your database:
@@ -116,49 +100,31 @@ Add initial data to your database:
 npx prisma db seed
 ```
 
-<details>
+### 5. Create a Plasmic project
 
-<summary>Expand for <code>yarn</code>, <code>pnpm</code> or <code>bun</code></summary>
+Create an account in [Plasmic Studio](https://studio.plasmic.app/), and then follow [this guide](https://docs.plasmic.app/learn/no-code-quickstart/#create-a-new-plasmic-project) to create the project in Plasmic.
 
-```bash
-# Using yarn
-yarn prisma db seed
+### 6. Connect Plasmic to your codebase
 
-# Using pnpm
-pnpm prisma db seed
+You need to connect your Plasmic project with the codebase. To do that, you will need to change following variables in `plasmic-init.ts`:
 
-# Using bun
-bun prisma db seed
-```
+- `id` - id of your project in Plasmic, can be found in the URL bar when opening the project
+- `token` - public project token, can be found when clicking `Code` button in the top right corner of a project navbar.
 
-</details>
-
-### 5. Run the app
+### 7. Run the app
 
 Start the development server:
 
 ```bash
-npm run dev
-```
-
-<details>
-
-<summary>Expand for <code>yarn</code>, <code>pnpm</code> or <code>bun</code></summary>
-
-```bash
-# Using yarn
 yarn dev
-
-# Using pnpm
-pnpm run dev
-
-# Using bun
-bun run dev
 ```
 
-</details>
 
 Once the server is running, visit `http://localhost:3000` to start using the app.
+
+### 8. Configure Plasmic project app host
+
+To see your code components inside Plasmic you will need to follow [this short guide](https://docs.plasmic.app/learn/app-hosting/#3-set-your-plasmic-project-to-use-your-app-host) to configure the app host - a bridge between the codebase and the studio.
 
 ## Next steps
 
