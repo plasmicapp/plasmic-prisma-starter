@@ -121,7 +121,7 @@ export const prismaFnContext = (
         return { dataKey: '', fetcher: async () => emptyFnContext };
     }
     return {
-        dataKey: JSON.stringify({ table, operation }),
+        dataKey: `${table}-${operation}`,
         fetcher: async () => ({
                 table,
                 operation,

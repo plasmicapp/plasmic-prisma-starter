@@ -50,7 +50,6 @@ PLASMIC.registerFunction(prismaQuery, {
     name: 'prismaQuery',
     displayName: 'Prisma Query',
     description: 'Run any Prisma model operation (find, create, update, delete, aggregate, …) with a structured UI.',
-    namespace: 'prisma',
     isQuery: true,
     fnContext: prismaFnContext,
     params: [
