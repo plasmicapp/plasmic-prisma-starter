@@ -105,29 +105,34 @@ const emptyFnContext: PrismaFnContext = {
  * that param callbacks in the Plasmic Studio have it available as `ctx`.
  */
 export const prismaFnContext = (
-    table?: string,
-    operation?: string,
-    select?: string[],
-    omit?: string[],
-    include?: string[],
-    orderBy?: string,
-): { dataKey: string; fetcher: () => Promise<PrismaFnContext> } => {
+    table: string | undefined,
+    operation: string | undefined,
+    _args: unknown,
+    _where: unknown,
+    orderBy: string | undefined,
+    _orderByDir: unknown,
+    _take: unknown,
+    _skip: unknown,
+    select: string[] | undefined,
+    omit: string[] | undefined,
+    include: string[] | undefined,
+) => {
     if (!table) {
         return { dataKey: '', fetcher: async () => emptyFnContext };
     }
     return {
         dataKey: JSON.stringify({ table, operation }),
         fetcher: async () => ({
-            table,
-            operation,
-            orderBy,
-            select,
-            omit,
-            include,
-            whereFields: getPrismaWhereFields(table),
-            scalarFields: getModelFieldOptions(table, ['scalar']),
-            enumFields: getModelFieldOptions(table, ['enum']),
-            objectFields: getModelFieldOptions(table, ['object']),
+                table,
+                operation,
+                orderBy,
+                select,
+                omit,
+                include,
+                whereFields: getPrismaWhereFields(table),
+                scalarFields: getModelFieldOptions(table, ['scalar']),
+                enumFields: getModelFieldOptions(table, ['enum']),
+                objectFields: getModelFieldOptions(table, ['object']),
         }),
     };
 };

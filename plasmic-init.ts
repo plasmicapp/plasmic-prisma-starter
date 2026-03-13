@@ -52,8 +52,7 @@ PLASMIC.registerFunction(prismaQuery, {
     description: 'Run any Prisma model operation (find, create, update, delete, aggregate, …) with a structured UI.',
     namespace: 'prisma',
     isQuery: true,
-    fnContext: (table, operation, _args, _where, orderBy, _orderByDir, _take, _skip, select, omit, include) =>
-        prismaFnContext(table, operation, select, omit, include, orderBy),
+    fnContext: prismaFnContext,
     params: [
         prismaTableParam,
         getPrismaOperationParam(PrismaOperations),
