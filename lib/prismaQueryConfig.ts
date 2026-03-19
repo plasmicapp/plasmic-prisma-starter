@@ -1,12 +1,11 @@
-import { Prisma } from '@prisma/client';
-import { PRISMA_TYPE_TO_QUERY_BUILDER } from '@/lib/types';
 import { prismaQuery } from '@/functions/prismaQuery';
+import { Prisma } from '@prisma/client';
 
 /** Typed tuple of the arguments currently passed to prismaQuery in the Plasmic UI */
 export type PrismaQueryParams = Partial<Parameters<typeof prismaQuery>>;
 
 /** Returns true (hidden) when no table/op is selected, or the op is not in the given set */
-export const hiddenUnlessOp =
+export const hideIfUnsupported =
     (ops: Set<string>) =>
     (_params: PrismaQueryParams, ctx?: PrismaFnContext): boolean => {
         if (!ctx?.table || !ctx?.operation) return true;
@@ -37,43 +36,16 @@ export const OPERATION_CAPS: Record<string, OperationCap[]> = {
 };
 
 /** Derive a Set of operation names that support a given capability */
-export const opsWithParam = (cap: OperationCap): Set<string> =>
+export const opsWithParam = (cap: OperationCap): Set<string> => 
     new Set(
         Object.entries(OPERATION_CAPS)
             .filter(([, caps]) => caps.includes(cap))
             .map(([op]) => op),
     );
-
-/** Build a queryBuilder `fields` config from a model's scalar/enum DMMF fields */
-export const getPrismaWhereFields = (modelName: unknown) => {
-    if (typeof modelName !== 'string') return {};
-    const model = Prisma.dmmf.datamodel.models.find(m => m.name === modelName);
-    if (!model) return {};
-    return Object.fromEntries(
-        model.fields
-            .filter(f => f.kind === 'scalar' || f.kind === 'enum')
-            .map(f => [f.name, {
-                label: f.name,
-                type: PRISMA_TYPE_TO_QUERY_BUILDER[f.type] ?? 'text',
-            }]),
-    );
-};
-
-/** Build a choice `options` list from a model's fields filtered by kind */
-export const getModelFieldOptions = (
-    modelName: unknown,
-    kinds: ('scalar' | 'object' | 'enum')[],
-) => {
-    if (typeof modelName !== 'string') return [];
-    const model = Prisma.dmmf.datamodel.models.find(m => m.name === modelName);
-    if (!model) return [];
-    return model.fields
-        .filter(f => kinds.includes(f.kind as 'scalar' | 'object' | 'enum'))
-        .map(f => ({ value: f.name, label: f.name }));
-};
-
+    
 /** The shape of the context pre-fetched by `prismaFnContext` */
 export type PrismaFnContext = {
+    models: { value: Prisma.ModelName; label: string }[];
     table: string | undefined;
     operation: string | undefined;
     orderBy: string | undefined;
@@ -87,6 +59,7 @@ export type PrismaFnContext = {
 };
 
 const emptyFnContext: PrismaFnContext = {
+    models: [],
     table: undefined,
     operation: undefined,
     orderBy: undefined,
@@ -105,14 +78,13 @@ const emptyFnContext: PrismaFnContext = {
  * that param callbacks in the Plasmic Studio have it available as `ctx`.
  */
 export const prismaFnContext = (
-    table: string | undefined,
+    table: Prisma.ModelName | undefined,
     operation: string | undefined,
-    _args: unknown,
-    _where: unknown,
+    where: unknown,
     orderBy: string | undefined,
-    _orderByDir: unknown,
-    _take: unknown,
-    _skip: unknown,
+    orderByDirection: unknown,
+    take: unknown,
+    skip: unknown,
     select: string[] | undefined,
     omit: string[] | undefined,
     include: string[] | undefined,
@@ -120,19 +92,54 @@ export const prismaFnContext = (
     if (!table) {
         return { dataKey: '', fetcher: async () => emptyFnContext };
     }
+    const currentParams = {
+        table,
+        operation,
+        where,
+        orderBy,
+        orderByDirection,
+        take,
+        skip,
+        select,
+        omit,
+        include
+    }
     return {
-        dataKey: `${table}-${operation}`,
-        fetcher: async () => ({
-                table,
-                operation,
-                orderBy,
-                select,
-                omit,
-                include,
-                whereFields: getPrismaWhereFields(table),
-                scalarFields: getModelFieldOptions(table, ['scalar']),
-                enumFields: getModelFieldOptions(table, ['enum']),
-                objectFields: getModelFieldOptions(table, ['object']),
-        }),
+        dataKey: `${table}-${operation}`, // re-fetch when any param changes
+        fetcher: async () => {
+            const res = await fetch(`/api/prisma-fields?${new URLSearchParams({ model: table })}`);
+            const { whereFields, scalarFields, enumFields, objectFields, models } = await res.json();
+
+            return {
+                ...currentParams,
+                models,
+                whereFields,
+                scalarFields,
+                enumFields,
+                objectFields,
+            };
+        },
     };
 };
+
+export const queryBuilderConfig = (_p: PrismaQueryParams, ctx?: PrismaFnContext) => ({
+    fields: ctx?.whereFields ?? {},
+    operators: {
+        // RAQB's built-in starts_with / ends_with have jsonLogic: undefined.
+        // Override them to emit custom JsonLogic keys that db-helpers.ts handles.
+        starts_with: {
+            label: 'Starts with',
+            labelForFormat: 'Starts with',
+            valueSources: ['value'],
+            jsonLogic: (field: unknown, _op: string, val: unknown) =>
+                ({ startsWith: [field, val] }),
+        },
+        ends_with: {
+            label: 'Ends with',
+            labelForFormat: 'Ends with',
+            valueSources: ['value'],
+            jsonLogic: (field: unknown, _op: string, val: unknown) =>
+                ({ endsWith: [field, val] }),
+        },
+    },
+});
