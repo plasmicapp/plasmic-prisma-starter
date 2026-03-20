@@ -1,4 +1,4 @@
-# Plamsic & Prisma Starter
+# Plasmic & Prisma Starter
 
 This repository provides a boilerplate to quickly set up a Next.js application with authentication using [Auth.js](https://authjs.dev/), [Prisma Postgres](https://www.prisma.io/postgres) and [Prisma ORM](https://www.prisma.io/orm), connect to [Plasmic](https://plasmic.app) and deploy it to Vercel. It includes an easy setup process and example routes that demonstrate basic CRUD operations against the database.
 
