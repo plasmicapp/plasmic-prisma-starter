@@ -5,8 +5,6 @@ import { DataProvider } from '@plasmicapp/loader-nextjs';
 import { prismaQuery } from '@/functions/prismaQuery';
 import { PrismaQueryParams, PrismaFieldsContext, PrismaOperations } from '@/lib/types';
 import { Prisma } from '@prisma/client';
-import { prismaModelToMethod } from '@/lib/db-helpers';
-
 
 interface PrismaDataFetcherProps extends React.PropsWithChildren {
     args?: Partial<PrismaQueryParams>,
@@ -41,7 +39,7 @@ export function PrismaDataFetcher(props: PrismaDataFetcherProps) {
                 return;
             }
             try {
-                const data = await prismaQuery({ table: prismaModelToMethod(table), operation, ...(args ?? {}) }, true);
+                const data = await prismaQuery({ table, operation, ...(args ?? {}) }, true);
                 setData(data);
             } catch (error: unknown) {
                 console.error("Error executing Prisma query:", error);
