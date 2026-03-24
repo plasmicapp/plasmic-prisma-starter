@@ -1,32 +1,36 @@
 'use client';
 
 import React from 'react';
-import { type Prisma } from '@prisma/client';
-import { PrismaOperations } from "@/lib/types";
 import { DataProvider } from '@plasmicapp/loader-nextjs';
 import { prismaQuery } from '@/functions/prismaQuery';
+import { PrismaQueryParams, PrismaFieldsContext } from '@/lib/types';
 
 
-interface PrismaDataFetcherProps<
-    TModel extends Prisma.ModelName,
-    TOp extends typeof PrismaOperations[number]
-> extends React.PropsWithChildren {
-    table: TModel,
-    operation: TOp,
-    args?: Prisma.TypeMap["model"][TModel]["operations"][TOp]["args"],
+interface PrismaDataFetcherProps extends React.PropsWithChildren {
+    args?: PrismaQueryParams,
+    setControlContextData?: (data: PrismaFieldsContext) => void,
 }
 
-export function PrismaDataFetcher<
-    TModel extends Prisma.ModelName,
-    TOp extends typeof PrismaOperations[number]
->(props: PrismaDataFetcherProps<TModel, TOp>) {
-    const { table, operation, args, children } = props;
+export function PrismaDataFetcher(props: PrismaDataFetcherProps) {
+    const { args, children, setControlContextData } = props;
+    const { table, operation } = args || {};
     const [data, setData] = React.useState<unknown>(null);
     const [error, setError] = React.useState<string | null>(null);
     const [loading, setLoading] = React.useState(true);
 
     // Fetch data from Prisma based on the provided props
     React.useEffect(() => {
+        // This is where we fetch the field information for the Plasmic Studio UI based on the selected model.
+        const fetchStudioFields = async () => {
+            if (!setControlContextData) return;
+            try {
+                const config = await fetch(`/api/prisma-fields?model=${table}`);
+                setControlContextData(await config.json());
+                
+            } catch (error: unknown) {
+                console.error("Error fetching Prisma fields:", error);
+            }
+        }
         const fetchData = async () => {
             if (!table || !operation) {
                 setError('Please select a table and an operation to execute.');
@@ -34,7 +38,7 @@ export function PrismaDataFetcher<
                 return;
             }
             try {
-                const data = await prismaQuery(table, operation, args);
+                const data = await prismaQuery({ table, operation, ...(args ?? {}) });
                 setData(data);
             } catch (error: unknown) {
                 console.error("Error executing Prisma query:", error);
@@ -44,7 +48,9 @@ export function PrismaDataFetcher<
             setLoading(false);
         }
         fetchData();
-    }, [table, operation, args]);
+        fetchStudioFields();
+
+    }, [table, operation, args, setControlContextData]);
 
     if (!table || !operation) {
         return children;

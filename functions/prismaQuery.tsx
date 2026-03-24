@@ -1,35 +1,31 @@
 'use server';
 
 import prisma from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import { checkPermissions } from "@/lib/checkPermissions";
-import { PrismaOperations } from "@/lib/types";
-import { tableNameToMethodName, jsonLogicToPrismaWhere, flattenToUniqueWhere } from "@/lib/db-helpers";
+import { prismaModelToMethod, jsonLogicToPrismaWhere, flattenToUniqueWhere } from "@/lib/db-helpers";
+import { PrismaQueryParams } from "@/lib/types";
 
-export const prismaQuery = async <
-    TModel extends Prisma.ModelName,
-    TOp extends typeof PrismaOperations[number]
->(
-    table: TModel,
-    operation: TOp,
-    where?: Record<string, unknown>,
-    orderBy?: string,
-    orderByDirection?: 'asc' | 'desc',
-    take?: number,
-    skip?: number,
-    select?: string[],
-    omit?: string[],
-    include?: string[],
-    cursorId?: string,
-    distinct?: string[],
-) => {
+export const prismaQuery = async ({
+    table,
+    operation,
+    where,
+    orderBy,
+    orderByDirection,
+    take,
+    skip,
+    select,
+    omit,
+    include,
+    cursorId,
+    distinct,
+}: PrismaQueryParams) => {
     if (!(await checkPermissions(operation))) {
         return {
             error: 'You do not have permission to perform this operation.'
         }
     }
 
-    const methodName = tableNameToMethodName(table || '');
+    const methodName = prismaModelToMethod(table || '');
     if (!methodName || !(operation in prisma[methodName])) {
         return {
             error: 'Please select a table and an operation to execute.'
@@ -55,8 +51,8 @@ export const prismaQuery = async <
 
     let result;
     try {
-        // @ts-expect-error - The union is too hard for TS to type check
-        result = await prisma[methodName][operation](finalArgs);
+        const delegate = prisma[methodName] as Record<string, (args: unknown) => Promise<unknown>>;
+        result = await delegate[operation](finalArgs);
     } catch (error: unknown) {
         console.error("Error executing Prisma query:", error);
         return {
@@ -64,5 +60,10 @@ export const prismaQuery = async <
         };
     }
 
+    /**
+     * If you want prismaQuery to return typed results, you can add generic type parameters to the PrismaQueryParams
+     * And then cast the result here like this: 
+     * result as Prisma.TypeMap['model'][TModel]['operations'][TOp]['result'];
+    */
     return result;
 };

@@ -1,71 +1,22 @@
-import { prismaQuery } from '@/functions/prismaQuery';
-import { Prisma } from '@prisma/client';
+import { PrismaQueryParams, PrismaFieldsContext, OPERATION_CAPS, OperationCap } from '@/lib/types';
 
-/** Typed tuple of the arguments currently passed to prismaQuery in the Plasmic UI */
-export type PrismaQueryParams = Partial<Parameters<typeof prismaQuery>>;
+export type PrismaControlArgs = [(PrismaQueryParams | undefined)?];
 
-/** Returns true (hidden) when no table/op is selected, or the op is not in the given set */
-export const hideIfUnsupported =
-    (ops: Set<string>) =>
-    (_params: PrismaQueryParams, ctx?: PrismaFnContext): boolean => {
-        if (!ctx?.table || !ctx?.operation) return true;
-        return !ops.has(ctx.operation);
-    };
+export const withPrismaParams =
+  <R>(fn: (params?: PrismaQueryParams, ctx?: PrismaFieldsContext) => R) =>
+  ([params]: PrismaControlArgs, ctx?: PrismaFieldsContext) =>
+    fn(params, ctx);
 
-/** Which UI params each Prisma operation supports */
-export type OperationCap = 'where' | 'orderBy' | 'pagination' | 'select' | 'include' | 'cursor' | 'distinct';
-
-export const OPERATION_CAPS: Record<string, OperationCap[]> = {
-    findUnique:          ['where', 'select', 'include'],
-    findUniqueOrThrow:   ['where', 'select', 'include'],
-    findMany:            ['where', 'orderBy', 'pagination', 'select', 'include', 'cursor', 'distinct'],
-    findFirst:           ['where', 'orderBy', 'pagination', 'select', 'include', 'cursor', 'distinct'],
-    findFirstOrThrow:    ['where', 'orderBy', 'pagination', 'select', 'include', 'cursor', 'distinct'],
-    create:              ['select', 'include'],
-    createMany:          [],
-    createManyAndReturn: ['select', 'include'],
-    update:              ['where', 'select', 'include'],
-    updateMany:          ['where'],
-    updateManyAndReturn: ['where', 'select'],
-    upsert:              ['where', 'select', 'include'],
-    delete:              ['where', 'select', 'include'],
-    deleteMany:          ['where'],
-    aggregate:           ['where', 'orderBy', 'pagination', 'cursor'],
-    count:               ['where', 'orderBy', 'pagination', 'cursor'],
-    groupBy:             ['where', 'orderBy', 'pagination', 'select'],
+export const isMethodAvailable = (
+  cap: OperationCap,
+  params?: PrismaQueryParams
+): boolean => {
+  if (!params?.table || !params?.operation) return true;
+  return (OPERATION_CAPS[params.operation] ?? []).includes(cap);
 };
 
-/** Derive a Set of operation names that support a given capability */
-export const opsWithParam = (cap: OperationCap): Set<string> => 
-    new Set(
-        Object.entries(OPERATION_CAPS)
-            .filter(([, caps]) => caps.includes(cap))
-            .map(([op]) => op),
-    );
-    
-/** The shape of the context pre-fetched by `prismaFnContext` */
-export type PrismaFnContext = {
-    models: { value: Prisma.ModelName; label: string }[];
-    table: string | undefined;
-    operation: string | undefined;
-    orderBy: string | undefined;
-    select: string[] | undefined;
-    omit: string[] | undefined;
-    include: string[] | undefined;
-    whereFields: Record<string, { label: string; type: string }>;
-    scalarFields: { value: string; label: string }[];
-    enumFields: { value: string; label: string }[];
-    objectFields: { value: string; label: string }[];
-};
-
-const emptyFnContext: PrismaFnContext = {
+const emptyFnContext: PrismaFieldsContext = {
     models: [],
-    table: undefined,
-    operation: undefined,
-    orderBy: undefined,
-    select: undefined,
-    omit: undefined,
-    include: undefined,
     whereFields: {},
     scalarFields: [],
     enumFields: [],
@@ -77,33 +28,13 @@ const emptyFnContext: PrismaFnContext = {
  * Keyed on the selected model name; fetches field metadata server-side so
  * that param callbacks in the Plasmic Studio have it available as `ctx`.
  */
-export const prismaFnContext = (
-    table: Prisma.ModelName | undefined,
-    operation: string | undefined,
-    where: unknown,
-    orderBy: string | undefined,
-    orderByDirection: unknown,
-    take: unknown,
-    skip: unknown,
-    select: string[] | undefined,
-    omit: string[] | undefined,
-    include: string[] | undefined,
-) => {
+export const prismaFnContext = (params?: PrismaQueryParams) => {
+    const { table, operation } = params || {};
+
     if (!table) {
         return { dataKey: '', fetcher: async () => emptyFnContext };
     }
-    const currentParams = {
-        table,
-        operation,
-        where,
-        orderBy,
-        orderByDirection,
-        take,
-        skip,
-        select,
-        omit,
-        include
-    }
+
     return {
         dataKey: `${table}-${operation}`, // re-fetch when any param changes
         fetcher: async () => {
@@ -111,18 +42,17 @@ export const prismaFnContext = (
             const { whereFields, scalarFields, enumFields, objectFields, models } = await res.json();
 
             return {
-                ...currentParams,
                 models,
                 whereFields,
                 scalarFields,
                 enumFields,
                 objectFields,
-            };
+            } as PrismaFieldsContext;
         },
     };
 };
 
-export const queryBuilderConfig = (_p: PrismaQueryParams, ctx?: PrismaFnContext) => ({
+export const queryBuilderConfig = withPrismaParams((_p, ctx) => ({
     fields: ctx?.whereFields ?? {},
     operators: {
         // RAQB's built-in starts_with / ends_with have jsonLogic: undefined.
@@ -142,4 +72,4 @@ export const queryBuilderConfig = (_p: PrismaQueryParams, ctx?: PrismaFnContext)
                 ({ endsWith: [field, val] }),
         },
     },
-});
+}));
