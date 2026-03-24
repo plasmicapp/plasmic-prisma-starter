@@ -31,14 +31,9 @@ const emptyFnContext: PrismaFieldsContext = {
 export const prismaFnContext = (params?: PrismaQueryParams) => {
     const { table, operation } = params || {};
 
-    if (!table) {
-        return { dataKey: '', fetcher: async () => emptyFnContext };
-    }
-
-    return {
-        dataKey: `${table}-${operation}`, // re-fetch when any param changes
-        fetcher: async () => {
-            const res = await fetch(`/api/prisma-fields?${new URLSearchParams({ model: table })}`);
+    const fieldsFetcher = async () => {
+        try {
+            const res = await fetch(`/api/prisma-fields?model=${table}`);
             const { whereFields, scalarFields, enumFields, objectFields, models } = await res.json();
 
             return {
@@ -48,7 +43,13 @@ export const prismaFnContext = (params?: PrismaQueryParams) => {
                 enumFields,
                 objectFields,
             } as PrismaFieldsContext;
-        },
+        } catch {
+            return emptyFnContext;
+        }
+    };
+    return {
+        dataKey: `${table}-${operation}`, // re-fetch when any param changes
+        fetcher: fieldsFetcher
     };
 };
 

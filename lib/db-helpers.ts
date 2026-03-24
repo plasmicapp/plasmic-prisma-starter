@@ -4,7 +4,8 @@ import prisma from "@/lib/prisma";
 /**
  * https://github.com/prisma/prisma/issues/11940#issuecomment-3106962088
  */
-export function prismaModelToMethod(self: Prisma.ModelName) {
+export function prismaModelToMethod(self?: Prisma.ModelName) {
+    if (!self) return undefined;
     return (self.substring(0, 1).toLowerCase() + self.substring(1)) as keyof typeof prisma;
 }
 

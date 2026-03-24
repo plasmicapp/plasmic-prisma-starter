@@ -5,37 +5,40 @@ import { checkPermissions } from "@/lib/checkPermissions";
 import { prismaModelToMethod, jsonLogicToPrismaWhere, flattenToUniqueWhere } from "@/lib/db-helpers";
 import { PrismaQueryParams } from "@/lib/types";
 
-export const prismaQuery = async ({
-    table,
-    operation,
-    where,
-    orderBy,
-    orderByDirection,
-    take,
-    skip,
-    select,
-    omit,
-    include,
-    cursorId,
-    distinct,
-}: PrismaQueryParams) => {
+// use rawArgs if you pass the args directly from the code, like in PrismaDataFetcher
+export const prismaQuery = async (args?: PrismaQueryParams, rawArgs?: boolean) => {
+    const { table, operation, ...payload } = args || {};
+    const {
+        where,
+        orderBy,
+        orderByDirection,
+        take,
+        skip,
+        select,
+        omit,
+        include,
+        cursorId,
+        distinct,
+    } = args || {};
+
+
+    const methodName = prismaModelToMethod(table);
+    if (!methodName || !operation || !(operation in prisma[methodName])) {
+        return {
+            error: 'Please select a table and an operation to execute.'
+        };
+    }
     if (!(await checkPermissions(operation))) {
         return {
             error: 'You do not have permission to perform this operation.'
         }
     }
 
-    const methodName = prismaModelToMethod(table || '');
-    if (!methodName || !(operation in prisma[methodName])) {
-        return {
-            error: 'Please select a table and an operation to execute.'
-        };
-    }
 
     const toFields = (fields?: string[]) =>
         fields?.length ? Object.fromEntries(fields.map(f => [f, true])) : undefined;
 
-    const finalArgs = Object.fromEntries(
+    const parsedArgs = Object.fromEntries(
         Object.entries({
             where: where ? flattenToUniqueWhere(jsonLogicToPrismaWhere(where)) : undefined,
             orderBy: orderBy ? { [orderBy]: orderByDirection ?? 'asc' } : undefined,
@@ -51,8 +54,8 @@ export const prismaQuery = async ({
 
     let result;
     try {
-        const delegate = prisma[methodName] as Record<string, (args: unknown) => Promise<unknown>>;
-        result = await delegate[operation](finalArgs);
+        // @ts-expect-error The union is too hard to check for TS
+        result = await prisma[methodName][operation](rawArgs ? payload : parsedArgs);
     } catch (error: unknown) {
         console.error("Error executing Prisma query:", error);
         return {
@@ -60,10 +63,5 @@ export const prismaQuery = async ({
         };
     }
 
-    /**
-     * If you want prismaQuery to return typed results, you can add generic type parameters to the PrismaQueryParams
-     * And then cast the result here like this: 
-     * result as Prisma.TypeMap['model'][TModel]['operations'][TOp]['result'];
-    */
     return result;
 };

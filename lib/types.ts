@@ -2,10 +2,8 @@ import { Prisma } from '@prisma/client';
 
 export const PrismaOperations = [
     'findUnique',
-    'findUniqueOrThrow',
     'findMany',
     'findFirst',
-    'findFirstOrThrow',
     'create',
     'createMany',
     'createManyAndReturn',
@@ -22,10 +20,8 @@ export const PrismaOperations = [
 
 export const PrismaReadOperations = [
     'findUnique',
-    'findUniqueOrThrow',
     'findMany',
     'findFirst',
-    'findFirstOrThrow',
     'aggregate',
     'count',
     'groupBy',
