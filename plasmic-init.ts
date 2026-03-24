@@ -29,10 +29,10 @@ export const prismaTableParam = {
     description: 'Select the Prisma model to query',
 };
 
-export const getPrismaOperationParam = <T extends readonly string[]>(operations: T) => ({
+export const prismaOperationParams =  ({
     name: 'operation' as const,
     type: 'choice' as const,
-    options: [...operations].map((op) => ({
+    options: [...PrismaOperations].map((op) => ({
         value: op,
         label: op,
     })),
@@ -53,7 +53,7 @@ PLASMIC.registerFunction(prismaQuery, {
         displayName: 'Query Parameters',
         fields: {
             table: prismaTableParam,
-            operation: getPrismaOperationParam(PrismaOperations),
+            operation: prismaOperationParams,
             where: {
                 type: 'queryBuilder',
                 displayName: 'Where',

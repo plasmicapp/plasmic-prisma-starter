@@ -1,10 +1,10 @@
 "use client";
 
-import { PLASMIC, prismaTableParam, getPrismaOperationParam } from "@/plasmic-init";
+import { PLASMIC, prismaOperationParams } from "@/plasmic-init";
 import { PlasmicRootProvider } from "@plasmicapp/loader-nextjs";
 import { UserSession } from "@/components/UserSessionContext";
 import React from "react";
-import { PrismaReadOperations } from "@/lib/types";
+import { PrismaFieldsContext } from "@/lib/types";
 import { PrismaDataFetcher } from "@/components/PrismaDataFetcher";
 
 
@@ -71,8 +71,12 @@ PLASMIC.registerGlobalContext(UserSession, {
 PLASMIC.registerComponent(PrismaDataFetcher, {
     name: "PrismaDataFetcher",
     props: {
-        table: prismaTableParam,
-        operation: getPrismaOperationParam(PrismaReadOperations),
+        table: {
+            type: 'choice',
+            options: (_p: unknown, ctx: PrismaFieldsContext | null) => ctx?.models || [],
+            description: 'Select the Prisma model to query',
+        },
+        operation: prismaOperationParams,
         args: {
             type: 'exprEditor',
             description: 'The Prisma query arguments',

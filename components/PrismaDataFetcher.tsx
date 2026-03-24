@@ -4,10 +4,13 @@ import React from 'react';
 import { DataProvider } from '@plasmicapp/loader-nextjs';
 import { prismaQuery } from '@/functions/prismaQuery';
 import { PrismaQueryParams, PrismaFieldsContext } from '@/lib/types';
+import { Prisma } from '@prisma/client';
 
 
 interface PrismaDataFetcherProps extends React.PropsWithChildren {
-    args?: PrismaQueryParams,
+    args?: Partial<PrismaQueryParams>,
+    table?: Prisma.ModelName,
+    operation?: string,
     setControlContextData?: (data: PrismaFieldsContext) => void,
 }
 
