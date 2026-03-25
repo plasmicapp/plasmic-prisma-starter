@@ -1,6 +1,6 @@
 import { PrismaQueryParams, PrismaFieldsContext, OPERATION_CAPS, OperationCap } from '@/lib/types';
 
-export type PrismaControlArgs = [(PrismaQueryParams | undefined)?];
+export type PrismaControlArgs = [(PrismaQueryParams | undefined)?, boolean?];
 
 export const withPrismaParams =
   <R>(fn: (params?: PrismaQueryParams, ctx?: PrismaFieldsContext) => R) =>
