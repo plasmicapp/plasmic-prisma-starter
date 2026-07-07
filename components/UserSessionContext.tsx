@@ -14,11 +14,18 @@ export function UserSession({
   const session = useSession();
 
   const logout = async (redirectTo = "/login") => {
-    await signOut();
+    try {
+      await signOut({ redirect: false });
+    } catch (error) {
+      console.error("Error during logout:", error);
+      return {
+        error,
+      };
+    }
     window.location.pathname = redirectTo;
   };
 
-  const login = async (provider: string, redirectTo = "/", payload: Record<string, string>) => {
+  const login = async (provider: string, redirectTo = "/", payload?: Record<string, string>) => {
     if (!provider) {
       console.error("No provider specified for login.");
       return;
@@ -27,7 +34,29 @@ export function UserSession({
       console.error("No payload provided for credentials login.");
       return;
     }
-    signIn(provider, { callbackUrl: redirectTo, ...payload });
+    try {
+      const result = await signIn(provider, {
+        redirect: false,
+        redirectTo,
+        ...(payload ?? {}),
+      });
+
+      if (result?.error) {
+        return {
+          error: result.error,
+          code: result.code,
+        };
+      }
+
+      if (result?.url) {
+        window.location.href = result.url;
+      }
+    } catch (error) {
+      console.error("Error during login:", error);
+      return {
+        error
+      };
+    }
   };
 
   const actions = React.useMemo(
