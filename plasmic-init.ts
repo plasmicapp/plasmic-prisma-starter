@@ -62,6 +62,12 @@ PLASMIC.registerFunction(prismaQuery, {
                 description: 'Filter results with a visual query builder',
                 config: queryBuilderConfig,
             },
+            data: {
+                type: 'object',
+                displayName: 'Data',
+                hidden: withPrismaParams((params) => !isMethodAvailable('data', params)),
+                description: 'Record data to create or update.',
+            },
             orderBy: {
                 displayName: 'Order By Field',
                 type: 'choice',

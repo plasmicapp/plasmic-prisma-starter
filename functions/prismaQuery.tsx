@@ -17,6 +17,7 @@ export const prismaQuery = async (args?: PrismaQueryParams, rawArgs?: boolean) =
         select,
         omit,
         include,
+        data,
         cursorId,
         distinct,
     } = args || {};
@@ -47,6 +48,7 @@ export const prismaQuery = async (args?: PrismaQueryParams, rawArgs?: boolean) =
             select:   toFields(select),
             omit:     toFields(omit),
             include:  toFields(include),
+            data,
             cursor:   cursorId ? { id: cursorId } : undefined,
             distinct: distinct?.length ? distinct : undefined,
         }).filter(([, v]) => v !== undefined)

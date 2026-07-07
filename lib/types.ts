@@ -57,13 +57,14 @@ export type PrismaQueryParams = {
     select?: string[];
     omit?: string[];
     include?: string[];
+    data?: Record<string, unknown> | Record<string, unknown>[];
     cursorId?: string;
     distinct?: string[];
 };
 
 
 /** Which UI params each Prisma operation supports */
-export type OperationCap = 'where' | 'orderBy' | 'pagination' | 'select' | 'include' | 'cursor' | 'distinct';
+export type OperationCap = 'where' | 'data' | 'orderBy' | 'pagination' | 'select' | 'include' | 'cursor' | 'distinct';
 
 export const OPERATION_CAPS: Record<string, OperationCap[]> = {
     findUnique:          ['where', 'select', 'include'],
@@ -71,12 +72,12 @@ export const OPERATION_CAPS: Record<string, OperationCap[]> = {
     findMany:            ['where', 'orderBy', 'pagination', 'select', 'include', 'cursor', 'distinct'],
     findFirst:           ['where', 'orderBy', 'pagination', 'select', 'include', 'cursor', 'distinct'],
     findFirstOrThrow:    ['where', 'orderBy', 'pagination', 'select', 'include', 'cursor', 'distinct'],
-    create:              ['select', 'include'],
-    createMany:          [],
-    createManyAndReturn: ['select', 'include'],
-    update:              ['where', 'select', 'include'],
-    updateMany:          ['where'],
-    updateManyAndReturn: ['where', 'select'],
+    create:              ['data', 'select', 'include'],
+    createMany:          ['data'],
+    createManyAndReturn: ['data', 'select', 'include'],
+    update:              ['where', 'data', 'select', 'include'],
+    updateMany:          ['where', 'data'],
+    updateManyAndReturn: ['where', 'data', 'select'],
     upsert:              ['where', 'select', 'include'],
     delete:              ['where', 'select', 'include'],
     deleteMany:          ['where'],
