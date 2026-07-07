@@ -20,7 +20,7 @@ This repository provides a boilerplate to quickly set up a Next.js application w
 After cloning the repo and navigating into it, install dependencies:
 
 ```
-yarn
+pnpm install
 ```
 
 ### 1. Create a Prisma Postgres instance
@@ -116,7 +116,7 @@ You need to connect your Plasmic project with the codebase. To do that, you will
 Start the development server:
 
 ```bash
-yarn dev
+pnpm dev
 ```
 
 
