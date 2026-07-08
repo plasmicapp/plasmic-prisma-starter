@@ -46,9 +46,6 @@ export const checkPermissions = async (operation: typeof PrismaOperations[number
     
     const role = await prisma.role.findUnique({
         where: { name: roleName },
-        cacheStrategy: {
-            ttl: 3600*12, // Cache for 12 hours
-        },
     });
 
     if (!role) {

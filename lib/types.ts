@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@/app/generated/prisma/client';
 
 export const PrismaOperations = [
     'findUnique',

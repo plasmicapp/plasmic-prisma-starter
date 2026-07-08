@@ -1,24 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@/app/generated/prisma/client';
+import prisma from '@/lib/prisma';
 import { PRISMA_TYPE_TO_QUERY_BUILDER } from '@/lib/types';
 
+type PrismaRuntimeField = {
+    name: string;
+    kind: string;
+    type: string;
+};
+
+type PrismaRuntimeModel = {
+    fields: PrismaRuntimeField[];
+};
+
+type PrismaRuntimeDataModel = {
+    models: Record<string, PrismaRuntimeModel>;
+    enums: Record<string, { values: { name: string }[] }>;
+};
+
+const getRuntimeDataModel = () =>
+    (prisma as unknown as { _runtimeDataModel: PrismaRuntimeDataModel })._runtimeDataModel;
 
 /** "createdAt" → "Created At", "userId" → "User Id" */
 const toLabel = (name: string) =>
     name.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
 const getModel = (modelName?: Prisma.ModelName) =>
-    modelName ? Prisma.dmmf.datamodel.models.find(m => m.name === modelName) : undefined;
+    modelName ? getRuntimeDataModel().models[modelName] : undefined;
 const toOptions = (f: { name: string }) => ({ value: f.name, label: toLabel(f.name) });
-const toFields = (kind: string, model: Prisma.DMMF.Model) =>
+const toFields = (kind: string, model: PrismaRuntimeModel) =>
     model.fields.filter(f => f.kind === kind).map(toOptions);
 
 /** Prisma enum name → RAQB listValues for select widgets */
 const enumListValues = (enumName: string) =>
-    (Prisma.dmmf.datamodel.enums.find(e => e.name === enumName)?.values ?? [])
+    (getRuntimeDataModel().enums[enumName]?.values ?? [])
         .map(v => ({ value: v.name, title: v.name }));
 
 export async function GET(request: NextRequest) {
-    const models = Prisma.dmmf.datamodel.models.map(toOptions);
+    const runtimeDataModel = getRuntimeDataModel();
+    const models = Object.keys(runtimeDataModel.models).map(name => ({ value: name, label: toLabel(name) }));
     const defaultResponse = { models, whereFields: {}, scalarFields: [], enumFields: [], objectFields: [] };
     const modelName = new URL(request.url).searchParams.get('model');
     const model = getModel(modelName as Prisma.ModelName);

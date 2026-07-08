@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@/app/generated/prisma/client';
 import prisma from "@/lib/prisma";
 
 /**
@@ -166,4 +166,3 @@ function collectConditions(where: Record<string, unknown>): Record<string, unkno
 export function flattenToUniqueWhere(where: Record<string, unknown>): Record<string, unknown> {
     return collectConditions(where);
 }
-

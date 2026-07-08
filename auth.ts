@@ -5,9 +5,12 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { nextAuthConfig } from "./auth.config";
 
+type PrismaAdapterClient = Parameters<typeof PrismaAdapter>[0];
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...nextAuthConfig,
-  adapter: PrismaAdapter(prisma),
+  // @auth/prisma-adapter still types its input against @prisma/client.
+  adapter: PrismaAdapter(prisma as unknown as PrismaAdapterClient),
   providers: [
     CredentialsProvider({
       credentials: {

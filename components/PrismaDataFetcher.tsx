@@ -4,7 +4,7 @@ import React from 'react';
 import { DataProvider } from '@plasmicapp/loader-nextjs';
 import { prismaQuery } from '@/functions/prismaQuery';
 import { PrismaQueryParams, PrismaFieldsContext, PrismaOperations } from '@/lib/types';
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@/app/generated/prisma/client';
 
 interface PrismaDataFetcherProps extends React.PropsWithChildren {
     args?: Partial<PrismaQueryParams>,
