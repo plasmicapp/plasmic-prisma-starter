@@ -11,10 +11,16 @@ import {
 export const PLASMIC = initPlasmicLoader({
   projects: [
     {
-      id: "xpjuD2VqBCGPggNh2kWhnV",  // ID of a project you are using
-      token: "KoTB6pMixrtcshRIbTxm4O1eJlvcXdMpTysufELoDziDkJ7yLz6pGCYcUtADcmsNCpZAWVKr9w78UNw9Yp4Q"  // API token for that project
+      // ID + token default to a test cloud project, override via env to point at e.g.
+      // a local Plasmic instance / cloned project (see .env). The project API token is a
+      // read-only loader token, safe to expose to the client.
+      id: process.env.NEXT_PUBLIC_PLASMIC_PROJECT_ID || "xpjuD2VqBCGPggNh2kWhnV",
+      token: process.env.NEXT_PUBLIC_PLASMIC_PROJECT_TOKEN || "KoTB6pMixrtcshRIbTxm4O1eJlvcXdMpTysufELoDziDkJ7yLz6pGCYcUtADcmsNCpZAWVKr9w78UNw9Yp4Q"
     }
   ],
+  // Point at a self-hosted / local Plasmic instance when set, otherwise Plasmic Cloud.
+  ...(process.env.NEXT_PUBLIC_PLASMIC_HOST ? { host: process.env.NEXT_PUBLIC_PLASMIC_HOST } : {}),
+  platformOptions: { nextjs: { appDir: true } },
   // Fetches the latest revisions, whether or not they were unpublished!
   // Disable for production to ensure you render only published changes.
   preview: true,

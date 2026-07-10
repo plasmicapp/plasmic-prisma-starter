@@ -21,14 +21,22 @@ export function PrismaDataFetcher(props: PrismaDataFetcherProps) {
 
     // Fetch data from Prisma based on the provided props
     React.useEffect(() => {
+        const controller = new AbortController();
+        const { signal } = controller;
+
+        const isTeardownError = (e: unknown) =>
+            signal.aborted ||
+            (e instanceof DOMException && e.name === "AbortError") ||
+            (e instanceof Error && /global scope is shutting down/i.test(e.message));
+
         // This is where we fetch the field information for the Plasmic Studio UI based on the selected model.
         const fetchStudioFields = async () => {
-            if (!setControlContextData) return;
+            if (!setControlContextData || signal.aborted) return;
             try {
-                const config = await fetch(`/api/prisma-fields?model=${table}`);
-                setControlContextData(await config.json());
-                
+                const config = await fetch(`/api/prisma-fields?model=${table}`, { signal });
+                if (!signal.aborted) setControlContextData(await config.json());
             } catch (error: unknown) {
+                if (isTeardownError(error)) return;
                 console.error("Error fetching Prisma fields:", error);
             }
         }
@@ -39,19 +47,22 @@ export function PrismaDataFetcher(props: PrismaDataFetcherProps) {
                 return;
             }
             try {
-                const data = await prismaQuery({ table, operation, ...(args ?? {}) }, true);
-                setData(data);
+                const result = await prismaQuery({ table, operation, ...(args ?? {}) }, true);
+                if (!signal.aborted) setData(result);
             } catch (error: unknown) {
+                if (isTeardownError(error)) return;
                 console.error("Error executing Prisma query:", error);
                 setError(`Error executing query: ${error instanceof Error ? error.message : String(error)}`);
+            } finally {
+                if (!signal.aborted) setLoading(false);
             }
-
-            setLoading(false);
         }
         fetchData();
         fetchStudioFields();
 
-    }, [table, operation, args, setControlContextData]);
+        return () => controller.abort();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [table, operation, JSON.stringify(args ?? {}), setControlContextData]);
 
     if (!table || !operation) {
         return children;
