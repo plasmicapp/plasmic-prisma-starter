@@ -2,6 +2,10 @@ import type { MetadataRoute } from "next";
 import prisma from "@/lib/prisma";
 import { PLASMIC } from "@/plasmic-init";
 
+// Published post URLs come from the database, which may not be reachable from
+// Vercel's build worker. Generate the sitemap in the runtime instead.
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const configuredUrl =
     process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
